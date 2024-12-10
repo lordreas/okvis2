@@ -1,4 +1,14 @@
 cmake_minimum_required(VERSION 3.8...3.30)
+
+# depthai-core must be initalized before the project() call due to hunter
+option (HAVE_OAKD
+        "Use oakd cameras as part of okvis" ON) 
+option (BUILD_OAKD_TEST
+        "Builds a test app for oakd" ON)
+if(HAVE_OAKD)
+  add_subdirectory(external/depthai-core EXCLUDE_FROM_ALL)
+endif()
+
 project(okvis VERSION 2.0.0 LANGUAGES CXX)
 
 # options for build configuration
@@ -154,6 +164,21 @@ if(BUILD_APPS)
         ${OKVIS_PRIVATE_CXX_FLAGS}
     )
     install(TARGETS okvis_app_realsense_recorder EXPORT okvisTargets RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})
+  endif()
+
+  if(HAVE_OAKD)
+    add_executable(okvis_app_oakd okvis_apps/src/okvis_app_oakd.cpp)
+    target_link_libraries(okvis_app_oakd
+      ${OpenCV_LIBS}
+      okvis::MultisensorProcessing
+    )
+    target_compile_options(okvis_app_oakd
+      PUBLIC
+        ${OKVIS_PUBLIC_CXX_FLAGS}
+      PRIVATE
+        ${OKVIS_PRIVATE_CXX_FLAGS}
+    )
+    install(TARGETS okvis_app_oakd EXPORT okvisTargets RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})
   endif()
   
   if(USE_NN)

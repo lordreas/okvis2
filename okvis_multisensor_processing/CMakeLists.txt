@@ -15,6 +15,7 @@ add_library(${LIB_NAME}
   include/okvis/QueuedTrajectory.hpp
   include/okvis/Realsense.hpp
   include/okvis/RealsenseRgbd.hpp
+  include/okvis/OakD.hpp
   include/okvis/RpgDatasetReader.hpp
   include/okvis/ThreadedSlam.hpp
   include/okvis/TrajectoryOutput.hpp
@@ -68,6 +69,16 @@ if(HAVE_LIBREALSENSE)
     realsense2::realsense2
   )
 endif()
+
+if(HAVE_OAKD)
+  target_sources(${LIB_NAME}
+    PRIVATE
+      src/OakD.cpp
+  )
+  target_link_libraries(${LIB_NAME}
+    depthai::opencv
+  )
+endif()
 add_library(okvis::MultisensorProcessing ALIAS ${LIB_NAME})
 
 install(TARGETS ${LIB_NAME} EXPORT okvisTargets
@@ -94,4 +105,13 @@ if(BUILD_TESTS)
       ${OKVIS_PRIVATE_CXX_FLAGS}
   )
   add_test(NAME ${TEST_NAME} COMMAND ${TEST_NAME})
+endif()
+
+if(BUILD_OAKD_TEST)
+  add_executable(okvis_multisensor_processing_oakd_demo
+    test/testOakD.cpp
+  )
+  target_link_libraries(okvis_multisensor_processing_oakd_demo
+    ${LIB_NAME}
+  )
 endif()
