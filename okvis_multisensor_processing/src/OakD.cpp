@@ -42,7 +42,7 @@
 namespace okvis{
 
 OakD::OakD(
-    bool enableRgb, const dai::ColorCameraProperties::SensorResolution rgbRes, const dai::MonoCameraProperties::SensorResolution irRes, const float rgbFps, const float irFps, const uint8_t imuRate)
+    bool enableRgb, const float rgbFps, const float irFps, const uint8_t imuRate, const dai::ColorCameraProperties::SensorResolution rgbRes, const dai::MonoCameraProperties::SensorResolution irRes)
     : pipeline_{}, pipelineInitialized_{false}, streaming_{false}, enableRgb_{enableRgb}, rgbRes_{rgbRes}, irRes_{irRes}, rgbFps_{rgbFps}, irFps_{irFps}, imuRate_{imuRate} {
   setupPipeline_();
 }
@@ -110,6 +110,10 @@ void OakD::setRgbFps(float rgbFps){
 }
 
 void OakD::processFrame(std::shared_ptr<dai::ADatatype> data){
+  if (warmupCounter_ < numWarnmupFrames_) {
+    warmupCounter_++;
+    return;
+  }
   std::shared_ptr<dai::MessageGroup> messageGroup = std::dynamic_pointer_cast<dai::MessageGroup>(data);
   
   std::map<size_t, cv::Mat> outFrame;
@@ -120,9 +124,6 @@ void OakD::processFrame(std::shared_ptr<dai::ADatatype> data){
   }
   std::chrono::steady_clock::time_point oakTs = messageGroup->get<dai::ImgFrame>("left")->getTimestamp();
   okvis::Time timestamp(oakTs.time_since_epoch().count());
-
-  std::cout << "Image dimensions of left image: " << outFrame[0].size() << std::endl;
-  std::cout << "Image dimensions of right image: " << outFrame[1].size() << std::endl;
 
   for (auto &imagesCallback : imagesCallbacks_) {
     imagesCallback(timestamp, outFrame, std::map<size_t, cv::Mat>());
@@ -211,7 +212,7 @@ void OakD::setupPipeline_(){
   // Define sources and outputs
   std::shared_ptr<dai::node::MonoCamera> monoLeft = pipeline_.create<dai::node::MonoCamera>();
   std::shared_ptr<dai::node::MonoCamera>  monoRight = pipeline_.create<dai::node::MonoCamera>();
-  std::shared_ptr<dai::node::StereoDepth> stereo = pipeline_.create<dai::node::StereoDepth>();
+  // std::shared_ptr<dai::node::StereoDepth> stereo = pipeline_.create<dai::node::StereoDepth>();
   std::shared_ptr<dai::node::Sync> sync = pipeline_.create<dai::node::Sync>();
   std::shared_ptr<dai::node::IMU> imu = pipeline_.create<dai::node::IMU>();
   std::shared_ptr<dai::node::XLinkOut> xoutSync = pipeline_.create<dai::node::XLinkOut>();
@@ -224,7 +225,7 @@ void OakD::setupPipeline_(){
   monoRight->setCamera("right");
   monoRight->setResolution(irRes_);
   monoRight->setFps(irFps_);
-  sync->setSyncThreshold(std::chrono::milliseconds(10));
+  sync->setSyncThreshold(std::chrono::milliseconds(uint16_t(1000 / std::min(irFps_, rgbFps_))));
   imu->enableIMUSensor({dai::IMUSensor::ACCELEROMETER_RAW, dai::IMUSensor::GYROSCOPE_RAW}, imuRate_);
   xoutSync->setStreamName("syncImgs");
   xoutImu->setStreamName("imu");
@@ -238,10 +239,12 @@ void OakD::setupPipeline_(){
   }
 
   // Make connections in pipeline graph
-  monoLeft->out.link(stereo->left);
-  monoRight->out.link(stereo->right);
-  stereo->rectifiedLeft.link(sync->inputs["left"]);
-  stereo->rectifiedRight.link(sync->inputs["right"]);
+  // monoLeft->out.link(stereo->left);
+  // monoRight->out.link(stereo->right);
+  // stereo->rectifiedLeft.link(sync->inputs["left"]);
+  // stereo->rectifiedRight.link(sync->inputs["right"]);
+  monoLeft->out.link(sync->inputs["left"]);
+  monoRight->out.link(sync->inputs["right"]);
   imu->out.link(xoutImu->input);
   sync->out.link(xoutSync->input);
 

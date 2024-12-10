@@ -5,21 +5,16 @@ bool imageCallback(const okvis::Time &timestamp, const std::map<size_t, cv::Mat>
   std::cout << "Processing frame..." << std::endl;
   cv::imshow("left", frame.at(0));
   cv::imshow("right", frame.at(1));
-//   cv::imshow("rgb", frame.at(2));
+  cv::imshow("rgb", frame.at(2));
   cv::waitKey(1);
     return true;
 }
 
 int main() {
-  okvis::OakD oakd(false);
+  okvis::OakD oakd(true, 10., 10.);
   oakd.startStreaming();
   oakd.setImagesCallback(imageCallback);
 
-//   // Connect to device and start pipeline
-//   dai::Device device(oakd.pipeline_);
-//   device.getOutputQueue("syncImgs", 8, false)->addCallback([](std::shared_ptr<dai::ADatatype> data){
-//      std::cout << "Processing frame..." << std::endl;
-//   });
   // empty loop
   while (true) {
       std::this_thread::sleep_for(std::chrono::milliseconds(5000));

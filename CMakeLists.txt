@@ -1,5 +1,11 @@
 cmake_minimum_required(VERSION 3.8...3.30)
 
+add_compile_options(-fsanitize=address -fno-omit-frame-pointer)
+add_link_options(-fsanitize=address -fno-omit-frame-pointer)
+  
+# You might also need one of the following depending on your compiler version:
+add_link_options(-static-libasan) # for some versions of GCC
+
 # depthai-core must be initalized before the project() call due to hunter
 option (HAVE_OAKD
         "Use oakd cameras as part of okvis" ON) 

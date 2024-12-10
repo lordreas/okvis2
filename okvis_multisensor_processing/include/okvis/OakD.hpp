@@ -58,11 +58,11 @@ public:
   /// @param irFps IR camera frame rate in (continusous of) fps.
   /// @param imuRate IMU rate in Hz.
   OakD(bool enableRgb = false,
-    const dai::ColorCameraProperties::SensorResolution rgbRes = dai::ColorCameraProperties::SensorResolution::THE_800_P,
-    const dai::MonoCameraProperties::SensorResolution irRes = dai::MonoCameraProperties::SensorResolution::THE_800_P,
     const float rgbFps = 10.0f,
     const float irFps = 10.0f,
-    const uint8_t imuRate = 200);
+    const uint8_t imuRate = 200,
+    const dai::ColorCameraProperties::SensorResolution rgbRes = dai::ColorCameraProperties::SensorResolution::THE_800_P,
+    const dai::MonoCameraProperties::SensorResolution irRes = dai::MonoCameraProperties::SensorResolution::THE_800_P);
   
   /// @brief Destructor. Will also stop the streaming, if started.
   virtual ~OakD();
@@ -133,6 +133,9 @@ public:
   float rgbFps_; ///< RGB camera FPS.
   float irFps_; ///< IR camera FPS.
   uint8_t imuRate_; ///< IMU rate.
+
+  uint16_t numWarnmupFrames_ = 20; ///< Number of warmup frames.
+  uint16_t warmupCounter_ = 0; ///< Counter for warmup frames.
 };
 }
 
