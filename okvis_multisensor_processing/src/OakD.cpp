@@ -42,105 +42,89 @@
 namespace okvis{
 
 OakD::OakD(
-    bool enableRgb, const float rgbFps, const float irFps, const uint8_t imuRate, const dai::ColorCameraProperties::SensorResolution rgbRes, const dai::MonoCameraProperties::SensorResolution irRes)
+    bool enableRgb, const float rgbFps, const float irFps, const uint32_t imuRate, const dai::ColorCameraProperties::SensorResolution rgbRes, const dai::MonoCameraProperties::SensorResolution irRes)
     : pipeline_{}, pipelineInitialized_{false}, streaming_{false}, enableRgb_{enableRgb}, rgbRes_{rgbRes}, irRes_{irRes}, rgbFps_{rgbFps}, irFps_{irFps}, imuRate_{imuRate} {
   setupPipeline_();
 }
 
 OakD::~OakD() {
-  if(streaming_) {
-    stopStreaming();
-  }
-}
-
-void OakD::setIrRes(dai::MonoCameraProperties::SensorResolution irRes){
-  irRes_ = irRes;
-  
-  bool wasStreaming = streaming_;
-  if (wasStreaming)
-    stopStreaming(); // TODO maybe this isn't necessary
-  
-  setupPipeline_();
-  
-  if (wasStreaming)
-    startStreaming();// TODO maybe this isn't necessary
-  
-}
-
-void OakD::setRgbRes(dai::ColorCameraProperties::SensorResolution rgbRes){
-  rgbRes_ = rgbRes;
-  
-  bool wasStreaming = streaming_;
-  if (wasStreaming)
-    stopStreaming(); // TODO maybe this isn't necessary
-  
-  setupPipeline_();
-  
-  if (wasStreaming)
-    startStreaming();// TODO maybe this isn't necessary
-  
-}
-
-void OakD::setIrFps(float irFps){
-  irFps_ = irFps;
-  
-  bool wasStreaming = streaming_;
-  if (wasStreaming)
-    stopStreaming(); // TODO maybe this isn't necessary
-  
-  setupPipeline_();
-  
-  if (wasStreaming)
-    startStreaming();// TODO maybe this isn't necessary
-  
-}
-
-void OakD::setRgbFps(float rgbFps){
-  rgbFps_ = rgbFps;
-  
-  bool wasStreaming = streaming_;
-  if (wasStreaming)
-    stopStreaming(); // TODO maybe this isn't necessary
-  
-  setupPipeline_();
-  
-  if (wasStreaming)
-    startStreaming();// TODO maybe this isn't necessary
-  
+  stopStreaming();
 }
 
 void OakD::processFrame(std::shared_ptr<dai::ADatatype> data){
+  // check if the image queue is initialized
+  if (!imgQueue_) {
+    return;
+  }
+
+  // check if streaming
+  if (!streaming_) {
+    return;
+  }
+
+  // discard warmup frames
   if (warmupCounter_ < numWarnmupFrames_) {
     warmupCounter_++;
     return;
   }
+
   std::shared_ptr<dai::MessageGroup> messageGroup = std::dynamic_pointer_cast<dai::MessageGroup>(data);
   
   std::map<size_t, cv::Mat> outFrame;
-  outFrame[0] = messageGroup->get<dai::ImgFrame>("left")->getCvFrame();
-  outFrame[1] = messageGroup->get<dai::ImgFrame>("right")->getCvFrame();
-  if (enableRgb_) {
-    outFrame[2] = messageGroup->get<dai::ImgFrame>("rgb")->getCvFrame();
+  auto leftFrame = messageGroup->get<dai::ImgFrame>("left");
+  if (!leftFrame) {
+    LOG(ERROR) << "Left frame not found in message group.";
+    return;
   }
-  std::chrono::steady_clock::time_point oakTs = messageGroup->get<dai::ImgFrame>("left")->getTimestamp();
-  okvis::Time timestamp(oakTs.time_since_epoch().count());
+  auto rightFrame = messageGroup->get<dai::ImgFrame>("right");
+  if (!rightFrame) {
+    LOG(ERROR) << "Right frame not found in message group.";
+    return;
+  }
+  outFrame[0] = leftFrame->getFrame(true);
+  outFrame[1] = rightFrame->getFrame(true);
+  if (enableRgb_) {
+    auto rgbFrame = messageGroup->get<dai::ImgFrame>("rgb");
+    if (!rgbFrame) {
+      LOG(ERROR) << "RGB frame not found in message group.";
+      return;
+    }
+    outFrame[2] = rgbFrame->getFrame(true);
+  }
+  
+  // timestamps of left and right frame are hardware synced (sub 1 ms latency) and the 
+  // rgb frame is software synced (sub 1/2 frame latency)
+  // so we can use the left frame timestamp as the timestamp for all frames
+  okvis::Time timestamp(std::chrono::duration_cast<std::chrono::duration<float>>(leftFrame->getTimestamp().time_since_epoch()).count());
 
   for (auto &imagesCallback : imagesCallbacks_) {
     imagesCallback(timestamp, outFrame, std::map<size_t, cv::Mat>());
   }
-
-
 }
 
 void OakD::processImu(std::shared_ptr<dai::ADatatype> data){
+  // check if the imu is initialized
+  if (!imuQueue_) {
+    return;
+  }
+  std::shared_ptr<dai::IMUData> imuData = std::dynamic_pointer_cast<dai::IMUData>(data);
 
-  // ImuMeasurement imuMeasurement{
-    
-  // }
-
-  // for (auto &imuCallback : imuCallbacks_) {
-  //   imuCallback(timestamp, Eigen::Vector3d(), Eigen::Vector3d());
-  // }
+  for (auto &packet : imuData->packets) {
+    // std::cout << "- - - - - - - - - - - - - - - - - - - - - - - - -" << std::endl;
+    // std::cout << "Timestamp acc: " << packet.acceleroMeter.getTimestamp().time_since_epoch().count() << std::endl;
+    // std::cout << "Timestamp gyr: " << packet.gyroscope.getTimestamp().time_since_epoch().count() << std::endl;
+    // std::cout << "Accuracy acc: " << static_cast<int>(packet.acceleroMeter.accuracy) << std::endl;
+    // std::cout << "Accuracy gyr: " << static_cast<int>(packet.gyroscope.accuracy) << std::endl;
+    uint64_t nanoseconds = packet.acceleroMeter.getTimestamp().time_since_epoch().count();
+    uint32_t secs = nanoseconds / 1000000000;
+    uint32_t nsecs = (nanoseconds % 1000000000);
+    okvis::Time timestamp(secs, nsecs);
+    Eigen::Vector3d gyr(packet.gyroscope.x, packet.gyroscope.y, packet.gyroscope.z);
+    Eigen::Vector3d acc(packet.acceleroMeter.x, packet.acceleroMeter.y, packet.acceleroMeter.z);
+    for (auto &imuCallback : imuCallbacks_) {
+      imuCallback(timestamp, acc, gyr);
+    }
+  }
 
 }
 
@@ -171,25 +155,38 @@ bool OakD::startStreaming(){
   return true;
 }
 
-
 bool OakD::stopStreaming(){
-  imgQueue_->close();
-  imuQueue_->close();
-  streaming_ = false;
-}
+  if (!streaming_) {
+      return true;
+  }
+  LOG(INFO) << "Stopping pipeline...";
 
+  // Remove callbacks on IMU and image queues
+  if (imgQueue_) {
+      imgQueue_->removeCallback(0);
+      imgQueue_->close();
+      imgQueue_.reset();
+  }
+
+  if (imuQueue_) {
+      imuQueue_->removeCallback(0);
+      imuQueue_->close();
+      imuQueue_.reset();
+  }
+
+  if (device_) {
+      device_->close();
+      device_.reset();
+  }
+
+  streaming_ = false;
+  return true;
+
+}
 
 bool OakD::isStreaming(){
   return streaming_;
 }
-
-
-
-
-// bool OakD::startStreaming_(const cv::Size& irSize, const uint irFps, const cv::Size& rgbSize, const uint rgbFps){
-
-// }
-
 
 void OakD::setupPipeline_(){
 
@@ -227,6 +224,8 @@ void OakD::setupPipeline_(){
   monoRight->setFps(irFps_);
   sync->setSyncThreshold(std::chrono::milliseconds(uint16_t(1000 / std::min(irFps_, rgbFps_))));
   imu->enableIMUSensor({dai::IMUSensor::ACCELEROMETER_RAW, dai::IMUSensor::GYROSCOPE_RAW}, imuRate_);
+  // imu->setBatchReportThreshold(1);
+  // imu->setMaxBatchReports(1);
   xoutSync->setStreamName("syncImgs");
   xoutImu->setStreamName("imu");
 
@@ -235,7 +234,7 @@ void OakD::setupPipeline_(){
     colorCamera->setBoardSocket(dai::CameraBoardSocket::RGB);
     colorCamera->setResolution(rgbRes_);
     colorCamera->setFps(rgbFps_);
-    colorCamera->video.link(sync->inputs["rgb"]);
+    colorCamera->isp.link(sync->inputs["rgb"]);
   }
 
   // Make connections in pipeline graph

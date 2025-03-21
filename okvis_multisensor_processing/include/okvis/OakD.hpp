@@ -52,42 +52,20 @@ public:
   
   /// @brief Alternative constructor. Won't start the streaming.
   /// @param enableRgb Enable RGB camera?
-  /// @param rgbRes Camera resolution of RGB cameras (as defined in dai::ColorCameraProperties::SensorResolution).
-  /// @param irRes Camera resolution of infrared cameras (as defined in dai::MonoCameraProperties::SensorResolution).
   /// @param rgbFps RGB camera frame rate in (continusous of) fps.
   /// @param irFps IR camera frame rate in (continusous of) fps.
   /// @param imuRate IMU rate in Hz.
+  /// @param rgbRes Camera resolution of RGB cameras (as defined in dai::ColorCameraProperties::SensorResolution).
+  /// @param irRes Camera resolution of infrared cameras (as defined in dai::MonoCameraProperties::SensorResolution).
   OakD(bool enableRgb = false,
     const float rgbFps = 10.0f,
     const float irFps = 10.0f,
-    const uint8_t imuRate = 200,
+    const uint32_t imuRate = 200,
     const dai::ColorCameraProperties::SensorResolution rgbRes = dai::ColorCameraProperties::SensorResolution::THE_800_P,
     const dai::MonoCameraProperties::SensorResolution irRes = dai::MonoCameraProperties::SensorResolution::THE_800_P);
   
   /// @brief Destructor. Will also stop the streaming, if started.
   virtual ~OakD();
-
-  /// @brief Specify IR image size. \warning Use eligible values.
-  /// @param width Image width.
-  /// @param height Image height.
-  void setIrRes(dai::MonoCameraProperties::SensorResolution irRes);
-  
-  /// @brief Specify RGB image size. \warning Use eligible values.
-  /// @param width Image width.
-  /// @param height Image height.
-  void setRgbRes(dai::ColorCameraProperties::SensorResolution rgbRes);   
-  
-  /**
-   * @brief Set the frame rate for the IR camera.
-   * @param irFps IR camera frame rate.
-   */
-  void setIrFps(float irFps);
-  
-  /**
-   * @brief Set the frame rate for the RGB camera.
-   * @param rgbFps RGB camera frame rate.
-   */
-  void setRgbFps(float rgbFps);
 
   /// \brief Process a frame.
   /// \param data the data block containing two (or 3 with rgb) synced frames.
@@ -132,7 +110,7 @@ public:
   dai::MonoCameraProperties::SensorResolution irRes_; ///< IR image Resolution.
   float rgbFps_; ///< RGB camera FPS.
   float irFps_; ///< IR camera FPS.
-  uint8_t imuRate_; ///< IMU rate.
+  uint32_t imuRate_; ///< IMU rate.
 
   uint16_t numWarnmupFrames_ = 20; ///< Number of warmup frames.
   uint16_t warmupCounter_ = 0; ///< Counter for warmup frames.

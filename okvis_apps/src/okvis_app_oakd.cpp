@@ -148,7 +148,7 @@ int main(int argc, char **argv) {
     signal(SIGINT, [](int) { shtdown = true; });
 
     // Main loop
-    while (true) {
+    while (!shtdown) {
       estimator.processFrame();
       std::map<std::string, cv::Mat> images;
       estimator.display(images);
@@ -165,9 +165,11 @@ int main(int argc, char **argv) {
         break;
       }
     }
+    std::cout << "Shutting down..." << std::endl;
     // Stop the pipeline
     oakd->stopStreaming();
     estimator.stopThreading();
+
 
     // final BA if needed
     if(parameters.estimator.do_final_ba) {
@@ -181,12 +183,13 @@ int main(int argc, char **argv) {
       cv::waitKey(1000);
     }
   }
-
   catch (const std::exception& e)
   {
     std::cerr << e.what() << std::endl;
     return EXIT_FAILURE;
   }
+
+  std::cout << "Shutdown complete." << std::endl;
 
   return EXIT_SUCCESS;
 }
