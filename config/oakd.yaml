@@ -1,45 +1,45 @@
 %YAML:1.0
 cameras:
      - {T_SC:
-        [1.0, 0.0, 0.0, -0.0302200001,
-         0.0, 1.0, 0.0,  0.0074000000,
-         0.0, 0.0, 1.0,  0.0160200000,
-          0.0, 0.0, 0.0, 1.0000000000],
-        image_dimension: [640, 480],
-        distortion_coefficients: [0.0, 0.0, 0.0, 0.0],
-        distortion_type: radialtangential,
-        focal_length: [390.598938, 390.598938],
-        principal_point: [320.581665, 237.712845],
+        [-0.01033515,  0.9999133 ,  0.00815948,  0.00367467,
+          0.99963746,  0.01053449, -0.02477842, -0.06251715,
+         -0.02486223,  0.00790043, -0.99965967, -0.00859219,
+          0.        ,  0.        ,  0.        ,  1.        ],
+        image_dimension: [1280, 800],
+        distortion_coefficients: [-0.012193346466158009, 0.03625828400139846, -0.03653772148065494, 0.012810845001040228],
+        distortion_type: equidistant,
+        focal_length: [573.6690348454742, 573.2079619189614],
+        principal_point: [623.6976866046803, 392.70763993873186],
         camera_type: gray, #gray, rgb, gray+depth, rgb+depth
         slam_use: okvis} #none, okvis, okvis-depth, okvis-virtual
 
      - {T_SC:
-        [1.0, 0.0, 0.0,  0.0646901205,
-         0.0, 1.0, 0.0,  0.0074000000,
-         0.0, 0.0, 1.0,  0.0160200000,
-          0.0, 0.0, 0.0, 1.0000000000],
-        image_dimension: [640, 480],
-        distortion_coefficients: [0.0, 0.0, 0.0, 0.0],
-        distortion_type: radialtangential,
-        focal_length: [390.598938, 390.598938],
-        principal_point: [320.581665, 237.712845],
+        [-0.00356428,  0.99998858,  0.00318478,  0.00279132,
+          0.99990168,  0.00360712, -0.01355026,  0.01266761,
+         -0.0135616 ,  0.00313617, -0.99990312, -0.00986626,
+          0.        ,  0.        ,  0.        ,  1.        ],
+        image_dimension: [1280, 800],
+        distortion_coefficients: [-0.009482555539709146, 0.03168083723356907, -0.034410850625722675, 0.013280490550018474],
+        distortion_type: equidistant,
+        focal_length: [572.2603616511043, 571.9691640352652],
+        principal_point: [618.783797367336, 418.9646297392418],
         camera_type: gray, #gray, rgb, gray+depth, rgb+depth
         slam_use: okvis} #none, okvis, okvis-depth, okvis-virtual
 
     #  - {T_SC:
-    #     [1.0, 0.0, 0.0,  0.0000000000,
-    #      0.0, 1.0, 0.0,  0.0074000000,
-    #      0.0, 0.0, 1.0,  0.0160200000,
-    #      0.0, 0.0, 0.0, 1.0000000000],
-    #     image_dimension: [640, 480],
-    #     distortion_coefficients: [0.0, 0.0, 0.0, 0.0],
-    #     distortion_type: radialtangential,
-    #     focal_length: [380.522, 380.166],
-    #     principal_point: [324.327, 245.278],
+    #     [-0.00151281,  0.99999624,  0.00228748,  0.00343524,
+    #      0.9998503 ,  0.001552  , -0.01723289, -0.02496842,
+    #     -0.01723637,  0.00226107, -0.99984889, -0.00904503,
+    #      0.        ,  0.        ,  0.        ,  1.        ],
+    #     image_dimension: [1280, 800],
+    #     distortion_coefficients: [0.00954179581176749, -0.018002156730892154, 0.019875698504960543, -0.006033953217193459],
+    #     distortion_type: equidistant,
+    #     focal_length: [571.8899711755143, 571.9738022114889],
+    #     principal_point: [608.7748127630152, 404.350865582975],
     #     camera_type: rgb, #gray, rgb, gray+depth, rgb+depth
-    #     baseline: [0.0,0.0,0.11], # optional: t_S_SC to virtual camera, if desired.
-    #     sigma_pixels: = 0.8, # optional: pixel uncertainty of stereo depth [pix]
-    #     sigma_depth: = 0.01, # optional: additional to pix. uncertainty: the depth uncertainty [m]
+    #     # baseline: [0.0,0.0,0.075], # optional: t_S_SC to virtual camera, if desired.
+    #     # sigma_pixels: = 0.8, # optional: pixel uncertainty of stereo depth [pix]
+    #     # sigma_depth: = 0.01, # optional: additional to pix. uncertainty: the depth uncertainty [m]
     #     slam_use: none} #none, okvis, okvis-depth, okvis-virtualal
 
 
@@ -56,17 +56,17 @@ camera_parameters:
 
 # the IMU sensor model
 imu_parameters:
-    use: false # enable IMU
-    a_max: 160.0 # acceleration saturation [m/s^2]
-    g_max: 10.0 # gyro saturation [rad/s]
-    sigma_g_c: 0.00278 # gyro noise density [rad/s/sqrt(Hz)]
-    sigma_bg: 0.03 # gyro bias prior [rad/s]
-    sigma_a_c: 0.0252 # accelerometer noise density [m/s^2/sqrt(Hz)]
-    sigma_ba: 0.01 # accelerometer bias prior [m/s^2]
-    sigma_gw_c: 0.0008 # gyro drift noise density [rad/s^s/sqrt(Hz)]
-    sigma_aw_c: 0.04 # accelerometer drift noise density [m/s^2/sqrt(Hz)]
-    a0: [0.237891675418656,  0.167477259386443,   0.242558311983621] # Initial accelerometer bias [m/s^2]
-    g0: [0.0, 0.0, 0.0] # Initial gyro bias [rad/s]
+    use: true # enable IMU
+    a_max: 160.0 # TODO acceleration saturation [m/s^2]
+    g_max: 10.0 # TODO gyro saturation [rad/s]
+    sigma_g_c: 0.006273842  # gyro noise density [rad/s/sqrt(Hz)] (20 * 0.0003136921005839569)
+    sigma_bg: 0.03 # TODO gyro bias prior [rad/s] 
+    sigma_a_c: 0.042331761 # accelerometer noise density [m/s^2/sqrt(Hz)] (20 * 0.0021165880447641967)
+    sigma_ba: 0.01 # TODO accelerometer bias prior [m/s^2]
+    sigma_gw_c: 0.000071937 # gyro drift noise density [rad/s^s/sqrt(Hz)] (20 * 3.59685947273216e-06)
+    sigma_aw_c: 0.002007494 # accelerometer drift noise density [m/s^2/sqrt(Hz)] (20 * 0.00010037469323142643)
+    a0: [0.237891675418656,  0.167477259386443,   0.242558311983621] # TODO Initial accelerometer bias [m/s^2]
+    g0: [0.0, 0.0, 0.0] # TODO Initial gyro bias [rad/s]
     g: 9.81007 # Earth's acceleration due to gravity [m/s^2]
     T_BS: 
         [ 1.0, 0.0, 0.0, 0.0,
@@ -77,10 +77,10 @@ imu_parameters:
 # frontend: detection etc. 
 frontend_parameters:
     detection_threshold: 30.0 # detection threshold. By default the uniformity radius in pixels
-    absolute_threshold: 5.0 # absolute Harris corner threshold (noise floor)
+    absolute_threshold: 10.0 # absolute Harris corner threshold (noise floor)
     matching_threshold: 60.0 # BRISK descriptor matching threshold
     octaves: 0 # number of octaves for detection. 0 means single-scale at highest resolution
-    max_num_keypoints: 2500 # restrict to a maximum of this many keypoints per image (strongest ones) 400
+    max_num_keypoints: 500 # restrict to a maximum of this many keypoints per image (strongest ones) 400
     keyframe_overlap: 0.55 # minimum field-of-view overlap 0.55
     use_cnn: false # whether to use the segmentation CNN
     parallelise_detection: true
